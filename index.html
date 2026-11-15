@@ -1,0 +1,4008 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f3f1e9">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="体测计算器">
+  <meta name="description" content="输入 7 项体测数据，自动计算单项分、附加分、总分和等级。评分参考《国家学生体质健康标准（2014年修订）》。">
+  <meta property="og:title" content="体测算分小助手">
+  <meta property="og:description" content="输入 7 项体测数据，自动计算总分、附加分和等级。">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='16'%20fill='%23111a17'/%3E%3Cpath%20d='M18%2034l9%209%2020-22'%20fill='none'%20stroke='%23d7f06a'%20stroke-width='6'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E">
+  <title>体测算分小助手 · 大学生体测评分</title>
+  <style>
+/* =========================================================
+   体测成绩计算器
+   Warm paper + ink + track orange / deep green / lime
+   ========================================================= */
+
+:root {
+  --ink: #111a17;
+  --ink-2: #1c2822;
+  --paper: #f3f1e9;
+  --paper-deep: #ece8dc;
+  --card: #fffdf8;
+  --line: #e2ded0;
+  --line-soft: #ece7da;
+  --muted: #6f756c;
+  --muted-2: #989c91;
+  --orange: #e85a2f;
+  --orange-soft: #fbe9e1;
+  --green: #0e6b4f;
+  --green-soft: #eaf4e5;
+  --lime: #d7f06a;
+  --excellent: #0b7a53;
+  --good: #2563a8;
+  --pass: #b7791f;
+  --fail: #c2412d;
+  --radius: 22px;
+  --shadow: 0 18px 45px rgba(17, 26, 23, 0.055);
+  --font-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "SFMono-Regular", "Cascadia Code", "Roboto Mono", Consolas, "Liberation Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  color: var(--ink);
+  background:
+    radial-gradient(900px 520px at 8% -10%, rgba(232, 90, 47, 0.12), transparent 62%),
+    radial-gradient(850px 540px at 96% 0%, rgba(14, 107, 79, 0.12), transparent 58%),
+    var(--paper);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.55;
+  background-image:
+    linear-gradient(rgba(17, 26, 23, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 26, 23, 0.028) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 68%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 68%);
+}
+
+::selection {
+  color: #111;
+  background: var(--lime);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 3px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.js-fallback {
+  position: relative;
+  z-index: 400;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 12px 22px;
+  border-bottom: 1px solid #e8c97e;
+  background: #fff3d6;
+  color: #5a4214;
+  font-size: 11.5px;
+  line-height: 1.65;
+}
+
+.js-fallback[hidden] {
+  display: none !important;
+}
+
+.js-fallback-icon {
+  width: 21px;
+  height: 21px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: #e8a33d;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.js-fallback strong {
+  display: block;
+  margin-bottom: 1px;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.js-fallback p {
+  margin: 0;
+}
+
+.js-fallback-detail {
+  margin-top: 4px !important;
+  color: #8a5b16;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  word-break: break-word;
+}
+
+.js-fallback-detail:empty {
+  display: none;
+}
+
+.svg-sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.icon {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- top bar ---------- */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid rgba(17, 26, 23, 0.08);
+  background: rgba(243, 241, 233, 0.84);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+
+.topbar-inner {
+  width: min(1180px, 100%);
+  min-height: 74px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.brand-mark {
+  width: 41px;
+  height: 41px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: var(--ink);
+  color: var(--lime);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  transform: rotate(-3deg);
+  box-shadow: 0 7px 16px rgba(17, 26, 23, 0.18);
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.brand-text strong {
+  font-size: 15px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.brand-text small {
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.main-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(17, 26, 23, 0.055);
+}
+
+.nav-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 9px 15px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #59615a;
+  font-size: 12.5px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nav-item:hover {
+  color: var(--ink);
+}
+
+.nav-item.is-active {
+  color: #fff;
+  background: var(--ink);
+  box-shadow: 0 4px 12px rgba(17, 26, 23, 0.18);
+}
+
+.nav-count {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--orange);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 750;
+  line-height: 1;
+}
+
+/* ---------- page shell ---------- */
+
+.page {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 0 24px 76px;
+}
+
+.view {
+  animation: view-in 0.35s ease both;
+}
+
+@keyframes view-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 48px;
+  padding: 58px 0 38px;
+}
+
+.page-head.compact {
+  padding: 54px 0 30px;
+}
+
+.page-head-copy {
+  max-width: 720px;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  color: var(--green);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--orange);
+  box-shadow: 0 0 0 4px rgba(232, 90, 47, 0.1);
+}
+
+.page-head h1 {
+  margin: 0;
+  font-size: clamp(38px, 5.2vw, 62px);
+  font-weight: 800;
+  line-height: 1.06;
+  letter-spacing: -0.055em;
+}
+
+.page-head h1 span {
+  color: var(--orange);
+}
+
+.page-head.compact h1 {
+  font-size: clamp(34px, 4.4vw, 50px);
+}
+
+.lede {
+  max-width: 600px;
+  margin: 18px 0 0;
+  color: #626861;
+  font-size: 14.5px;
+  line-height: 1.8;
+}
+
+.head-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.head-chips span {
+  padding: 6px 11px;
+  border: 1px solid #d8d4c6;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.42);
+  color: #59615a;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.head-stamp {
+  width: 196px;
+  height: 196px;
+  flex: 0 0 auto;
+  position: relative;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d5d0c0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.36);
+}
+
+.head-stamp::before {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border: 1px dashed #c9c4b4;
+  border-radius: 50%;
+}
+
+.stamp-circle {
+  text-align: center;
+  transform: translateY(-4px);
+}
+
+.stamp-circle strong {
+  display: block;
+  font-size: 60px;
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.07em;
+}
+
+.stamp-circle small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.22em;
+}
+
+.head-stamp p {
+  position: absolute;
+  bottom: 31px;
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 7px;
+  line-height: 1.65;
+  letter-spacing: 0.2em;
+  text-align: center;
+}
+
+/* ---------- layout ---------- */
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(350px, 0.88fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.form-panel {
+  padding: 25px 28px 22px;
+}
+
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.panel-kicker {
+  margin: 0;
+  color: var(--orange);
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.panel-head h2,
+.result-top h2 {
+  margin: 3px 0 0;
+  font-size: 21px;
+  font-weight: 780;
+  letter-spacing: -0.035em;
+}
+
+.text-btn {
+  padding: 5px 0;
+  border: 0;
+  background: transparent;
+  color: var(--orange);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.text-btn:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.text-btn.danger {
+  color: var(--fail);
+}
+
+/* ---------- identity ---------- */
+
+.identity-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid #eae5d6;
+  border-radius: 16px;
+  background: #f5f2e8;
+}
+
+.control-label {
+  display: block;
+  margin-bottom: 7px;
+  color: #6b7168;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.segmented {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 10px;
+  background: #e9e5d8;
+}
+
+.segmented button {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #626960;
+  font-size: 11.5px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.segmented button:hover {
+  color: var(--ink);
+}
+
+.segmented button.is-active {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: 0 2px 7px rgba(17, 26, 23, 0.1);
+}
+
+/* ---------- form sections ---------- */
+
+.form-section {
+  margin-top: 25px;
+  padding-top: 23px;
+  border-top: 1px dashed #e2ddcf;
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.section-no {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: var(--orange-soft);
+  color: var(--orange);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.section-head h3 {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 750;
+  letter-spacing: -0.015em;
+}
+
+.section-head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 12px;
+  margin-top: 16px;
+}
+
+.field-grid.cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.field-wide {
+  grid-column: 1 / -1;
+}
+
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 18px;
+  margin-bottom: 6px;
+  color: #4f574f;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.field-label em {
+  color: #a3a79e;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ref-badge {
+  margin-left: auto;
+  padding: 2px 6px;
+  border: 1px solid #dbe8d4;
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 8.5px;
+  font-weight: 650;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.input-shell {
+  display: flex;
+  align-items: center;
+  min-height: 46px;
+  border: 1px solid #e6e1d3;
+  border-radius: 12px;
+  background: #f7f4eb;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.input-shell:focus-within {
+  border-color: rgba(232, 90, 47, 0.68);
+  background: #fffdf8;
+  box-shadow: 0 0 0 3px rgba(232, 90, 47, 0.11);
+}
+
+.input-shell input {
+  width: 100%;
+  min-width: 0;
+  padding: 12px 7px 12px 13px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 15.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.input-shell input::placeholder {
+  color: #b3b4a9;
+  font-weight: 500;
+}
+
+.input-shell .unit {
+  flex: none;
+  padding-right: 12px;
+  color: #8b8f84;
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.field-error {
+  min-height: 14px;
+  margin-top: 3px;
+  color: var(--fail);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.field.is-invalid .input-shell {
+  border-color: var(--fail);
+  background: #fff7f3;
+  box-shadow: 0 0 0 3px rgba(194, 65, 45, 0.08);
+}
+
+/* BMI strip */
+
+.bmi-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 13px;
+  padding: 11px 14px;
+  border: 1px solid #dbe8d4;
+  border-radius: 13px;
+  background: linear-gradient(100deg, #edf6e9, #f8f5eb);
+  animation: strip-in 0.25s ease both;
+}
+
+@keyframes strip-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bmi-strip[data-category="低体重"],
+.bmi-strip[data-category="超重"] {
+  border-color: #ead9b5;
+  background: linear-gradient(100deg, #fbf3df, #f8f5eb);
+}
+
+.bmi-strip[data-category="低体重"] .bmi-value,
+.bmi-strip[data-category="超重"] .bmi-value,
+.bmi-strip[data-category="低体重"] .bmi-caption strong,
+.bmi-strip[data-category="超重"] .bmi-caption strong {
+  color: #9a6a1f;
+}
+
+.bmi-strip[data-category="肥胖"] {
+  border-color: #efc7bb;
+  background: linear-gradient(100deg, #fbeae3, #f8f5eb);
+}
+
+.bmi-strip[data-category="肥胖"] .bmi-value,
+.bmi-strip[data-category="肥胖"] .bmi-caption strong {
+  color: #a84a33;
+}
+
+.bmi-main {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bmi-value {
+  color: #245b3d;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.bmi-caption {
+  color: #657263;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.bmi-caption strong {
+  color: var(--green);
+  font-weight: 750;
+}
+
+.bmi-score {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex: none;
+  color: #778273;
+  font-size: 9px;
+}
+
+.bmi-score strong {
+  color: var(--orange);
+  font-size: 17px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* time input */
+
+.time-shell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.time-part {
+  flex: 1;
+}
+
+.time-part input {
+  text-align: center;
+  padding-left: 10px;
+}
+
+.time-part .unit {
+  padding-right: 9px;
+}
+
+.time-colon {
+  color: #a0a398;
+  font-size: 19px;
+  font-weight: 750;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+/* form foot */
+
+.form-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #eae5d7;
+}
+
+.form-note {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  color: #8b8f84;
+  font-size: 9.5px;
+  line-height: 1.4;
+}
+
+.form-note .icon {
+  width: 12px;
+  height: 12px;
+}
+
+.ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 9px 13px;
+  border: 1px solid #ddd8c8;
+  border-radius: 10px;
+  background: transparent;
+  color: #4f574f;
+  font-size: 10.5px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.ghost-btn:hover {
+  border-color: #cfc9b7;
+  background: #f5f2e8;
+  color: var(--ink);
+}
+
+.ghost-btn.small {
+  padding: 7px 10px;
+  font-size: 9.5px;
+}
+
+.primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 11px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease, filter 0.18s ease;
+}
+
+.primary-btn:hover {
+  transform: translateY(-1px);
+  background: var(--ink-2);
+}
+
+/* ---------- result panel ---------- */
+
+.result-column {
+  min-width: 0;
+}
+
+.result-panel {
+  position: sticky;
+  top: 96px;
+  padding: 23px;
+  border-color: #26342d;
+  color: #f7f5ec;
+  background:
+    radial-gradient(430px 270px at 94% -8%, rgba(215, 240, 106, 0.16), transparent 65%),
+    radial-gradient(360px 280px at -12% 112%, rgba(232, 90, 47, 0.14), transparent 62%),
+    #111a17;
+  box-shadow: 0 22px 50px rgba(17, 26, 23, 0.2);
+}
+
+.result-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.result-top .panel-kicker {
+  color: rgba(247, 245, 236, 0.4);
+}
+
+.result-top h2 {
+  color: #fff;
+}
+
+.grade-badge {
+  flex: none;
+  padding: 5px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.grade-badge[data-grade="优秀"] {
+  border-color: rgba(215, 240, 106, 0.3);
+  background: rgba(215, 240, 106, 0.1);
+  color: #d9f27a;
+}
+
+.grade-badge[data-grade="良好"] {
+  border-color: rgba(168, 204, 255, 0.3);
+  background: rgba(120, 170, 255, 0.1);
+  color: #a8ccff;
+}
+
+.grade-badge[data-grade="及格"] {
+  border-color: rgba(255, 208, 138, 0.3);
+  background: rgba(255, 190, 100, 0.1);
+  color: #ffd08a;
+}
+
+.grade-badge[data-grade="不及格"] {
+  border-color: rgba(255, 158, 139, 0.32);
+  background: rgba(255, 120, 95, 0.1);
+  color: #ff9e8b;
+}
+
+.gauge-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.gauge {
+  position: relative;
+  width: 224px;
+  height: 224px;
+  margin-top: 8px;
+}
+
+.gauge svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.gauge-track,
+.gauge-progress {
+  fill: none;
+  stroke-width: 10;
+}
+
+.gauge-track {
+  stroke: rgba(255, 255, 255, 0.075);
+}
+
+.gauge-progress {
+  stroke: #d7f06a;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: stroke-dashoffset 0.85s cubic-bezier(0.22, 1, 0.36, 1), stroke 0.35s ease;
+}
+
+.result-panel[data-grade="优秀"] .gauge-progress { stroke: #d7f06a; }
+.result-panel[data-grade="良好"] .gauge-progress { stroke: #8dbdff; }
+.result-panel[data-grade="及格"] .gauge-progress { stroke: #ffc46b; }
+.result-panel[data-grade="不及格"] .gauge-progress { stroke: #ff8e78; }
+
+.gauge-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 3px;
+  pointer-events: none;
+}
+
+.gauge-total {
+  color: #fff;
+  font-size: 64px;
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.07em;
+  font-variant-numeric: tabular-nums;
+}
+
+.result-panel[data-state="empty"] .gauge-total {
+  color: rgba(255, 255, 255, 0.24);
+}
+
+.gauge-cap {
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.score-split {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  margin-top: 18px;
+  padding: 11px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.split-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.split-item span {
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.split-item strong {
+  color: #fff;
+  font-size: 19px;
+  font-weight: 750;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.split-item small {
+  color: rgba(255, 255, 255, 0.28);
+  font-size: 8.5px;
+}
+
+.split-divider {
+  width: 1px;
+  height: 30px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.level-hint {
+  min-height: 17px;
+  margin: 13px 0 0;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 10.5px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.level-hint strong {
+  color: #d9f27a;
+  font-weight: 700;
+}
+
+/* checklist */
+
+.checklist {
+  margin-top: 17px;
+  padding: 13px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.checklist-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 9px;
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.checklist-head strong {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.checklist ul {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checklist li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 10px;
+  line-height: 1.25;
+  transition: color 0.2s ease;
+}
+
+.checklist li span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.check-dot {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.checklist li.is-done {
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.checklist li.is-done .check-dot {
+  border-color: var(--lime);
+  background: var(--lime);
+}
+
+.checklist li.is-done .check-dot::after {
+  content: "";
+  width: 3px;
+  height: 5px;
+  margin-top: -1px;
+  border-right: 1.4px solid #111;
+  border-bottom: 1.4px solid #111;
+  transform: rotate(42deg);
+}
+
+/* breakdown */
+
+.breakdown {
+  margin-top: 17px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.breakdown-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.breakdown-head h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.breakdown-head span {
+  color: rgba(255, 255, 255, 0.32);
+  font-size: 8.5px;
+}
+
+.score-row {
+  padding: 9px 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.075);
+}
+
+.score-row:last-child {
+  border-bottom: 0;
+}
+
+.score-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.score-name {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.score-name small {
+  color: rgba(255, 255, 255, 0.36);
+  font-size: 9px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.score-value {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  flex: none;
+}
+
+.score-value b {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.score-value > span {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 8px;
+}
+
+.bonus-flag {
+  display: inline-block;
+  margin-left: 3px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: var(--lime);
+  color: #111;
+  font-size: 7.5px;
+  font-weight: 750;
+  line-height: 1.2;
+  vertical-align: 1px;
+}
+
+.score-row-foot {
+  display: grid;
+  grid-template-columns: 1fr 44px;
+  align-items: center;
+  gap: 8px;
+}
+
+.mini-bar {
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.075);
+  overflow: hidden;
+}
+
+.mini-bar span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #638b53, var(--lime));
+}
+
+.mini-bar span.is-mid {
+  background: linear-gradient(90deg, #b08038, #ffc46b);
+}
+
+.mini-bar span.is-low {
+  background: linear-gradient(90deg, #a34835, #ff8e78);
+}
+
+.weighted {
+  color: rgba(255, 255, 255, 0.44);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.insight {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 13px;
+  padding: 10px 11px;
+  border: 1px solid rgba(215, 240, 106, 0.16);
+  border-radius: 11px;
+  background: rgba(215, 240, 106, 0.07);
+}
+
+.insight-icon {
+  width: 17px;
+  height: 17px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--lime);
+  color: #111;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.insight strong {
+  display: block;
+  margin-bottom: 2px;
+  color: #e8f7b0;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.insight p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+/* result actions */
+
+.result-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.result-panel .primary-btn {
+  background: var(--lime);
+  color: #111;
+  font-size: 10px;
+}
+
+.result-panel .primary-btn:hover {
+  background: #e2f88a;
+}
+
+.result-panel .ghost-btn {
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 10px;
+}
+
+.result-panel .ghost-btn:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.primary-btn:disabled {
+  cursor: default;
+  opacity: 0.7;
+  transform: none;
+}
+
+.privacy-note {
+  margin: 12px 0 0;
+  color: rgba(255, 255, 255, 0.26);
+  font-size: 8.5px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* ---------- standards ---------- */
+
+.standards-panel {
+  padding: 24px;
+}
+
+.standards-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.standards-toolbar .segmented {
+  min-width: 190px;
+  border: 1px solid #e6e1d3;
+  background: #f0ede2;
+}
+
+.scroll-hint {
+  display: none;
+  margin: 12px 2px -6px;
+  color: #9a9d92;
+  font-size: 9px;
+  text-align: right;
+}
+
+.table-wrap {
+  margin-top: 18px;
+  overflow-x: auto;
+  border: 1px solid #e6e1d3;
+  border-radius: 14px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.score-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 11.5px;
+}
+
+.score-table th,
+.score-table td {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.score-table thead th {
+  padding: 10px 6px;
+  border-bottom: 1px solid #e6e1d3;
+  background: #f5f2e8;
+  color: #767b71;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.score-table thead th small {
+  display: block;
+  margin-top: 2px;
+  color: #a3a79e;
+  font-size: 7.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.score-table tbody td {
+  padding: 9px 6px;
+  border-bottom: 1px solid #f0ece0;
+  color: #3e463f;
+  font-variant-numeric: tabular-nums;
+}
+
+.score-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.score-table tbody tr:nth-child(even) td {
+  background: #fbfaf4;
+}
+
+.score-table th:first-child,
+.score-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  width: 54px;
+  background: var(--card);
+  font-weight: 750;
+}
+
+.score-table thead th:first-child {
+  z-index: 3;
+  background: #f5f2e8;
+}
+
+.score-table tbody tr:nth-child(even) td:first-child {
+  background: #fbfaf4;
+}
+
+.score-table tr.band-excellent td:first-child {
+  color: var(--excellent);
+  box-shadow: inset 3px 0 0 var(--excellent);
+}
+
+.score-table tr.band-good td:first-child {
+  color: var(--good);
+  box-shadow: inset 3px 0 0 var(--good);
+}
+
+.score-table tr.band-pass td:first-child {
+  color: var(--pass);
+  box-shadow: inset 3px 0 0 var(--pass);
+}
+
+.score-table tr.band-fail td:first-child {
+  color: var(--fail);
+  box-shadow: inset 3px 0 0 var(--fail);
+}
+
+.score-table td.is-empty {
+  color: #c5c4b8;
+}
+
+.table-note {
+  margin: 12px 0 0;
+  color: #8b8f84;
+  font-size: 9.5px;
+  line-height: 1.6;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.mini-panel {
+  padding: 20px;
+}
+
+.mini-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mini-panel-head h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.mini-panel-head > span {
+  color: var(--orange);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.mini-panel-desc {
+  margin: 7px 0 12px;
+  color: #757b72;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.bonus-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.bonus-table th,
+.bonus-table td {
+  padding: 5px 2px;
+  border: 1px solid #ece7da;
+  text-align: center;
+}
+
+.bonus-table thead th {
+  background: #f5f2e8;
+  color: #6c7268;
+  font-size: 8.5px;
+  font-weight: 600;
+}
+
+.bonus-table tbody th {
+  width: 52px;
+  background: #fbf9f3;
+  color: #8b8f84;
+  font-size: 8px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.bonus-table td:first-of-type {
+  color: var(--green);
+  font-weight: 750;
+  background: #f2f8ee;
+}
+
+.formula-box {
+  margin-top: 8px;
+  padding: 9px 10px;
+  border: 1px solid #eae4d5;
+  border-radius: 9px;
+  background: #f5f2e8;
+  color: #3e463f;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.rule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rule-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed #eee9dc;
+  font-size: 9.5px;
+}
+
+.rule-list li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.rule-list span {
+  color: #6c7268;
+}
+
+.rule-list strong {
+  color: #313a33;
+  font-weight: 600;
+}
+
+.bmi-note {
+  margin: 10px 0 0;
+  padding-top: 8px;
+  border-top: 1px dashed #eee9dc;
+  color: #8b8f84;
+  font-size: 8.5px;
+  line-height: 1.6;
+}
+
+.weight-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.weight-row {
+  display: grid;
+  grid-template-columns: 82px 1fr 34px;
+  align-items: center;
+  gap: 8px;
+  color: #5d645b;
+  font-size: 9px;
+}
+
+.weight-bar {
+  height: 5px;
+  border-radius: 999px;
+  background: #f0ece0;
+  overflow: hidden;
+}
+
+.weight-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--green), #9bc47a);
+}
+
+.weight-row b {
+  color: #313a33;
+  font-size: 9px;
+  font-weight: 650;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.source-note {
+  max-width: 780px;
+  margin: 22px auto 0;
+  color: #9a9d92;
+  font-size: 9.5px;
+  line-height: 1.7;
+  text-align: center;
+}
+
+/* ---------- history ---------- */
+
+.history-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.history-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.history-card {
+  position: relative;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--grade-color, #ddd8c8);
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.history-card[data-grade="优秀"] { --grade-color: var(--excellent); }
+.history-card[data-grade="良好"] { --grade-color: var(--good); }
+.history-card[data-grade="及格"] { --grade-color: var(--pass); }
+.history-card[data-grade="不及格"] { --grade-color: var(--fail); }
+
+.history-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.history-date {
+  color: var(--muted-2);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.02em;
+}
+
+.history-card .grade-badge {
+  border-color: transparent;
+  color: var(--grade-color, var(--muted));
+  background: color-mix(in srgb, var(--grade-color, #ddd8c8) 10%, transparent);
+}
+
+.history-score {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.history-score strong {
+  color: var(--ink);
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.055em;
+  font-variant-numeric: tabular-nums;
+}
+
+.history-score > span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.history-score small {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 9.5px;
+  white-space: nowrap;
+}
+
+.history-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.history-chip {
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: #f5f2e8;
+  color: #5d645b;
+  font-size: 8.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.history-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 13px;
+  padding-top: 11px;
+  border-top: 1px dashed #eae5d8;
+}
+
+.history-actions button {
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--green);
+  font-size: 9.5px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.history-actions button:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.history-actions button[data-action="delete"] {
+  margin-left: auto;
+  color: #b45442;
+}
+
+.empty-state {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 54px 24px 50px;
+  text-align: center;
+}
+
+.empty-illustration {
+  width: 108px;
+  height: 108px;
+  margin: 0 auto 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #d6d1c0;
+  border-radius: 50%;
+  background: #faf8f1;
+  color: #cfcabb;
+}
+
+.empty-illustration span {
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.06em;
+}
+
+.empty-illustration small {
+  margin-top: 3px;
+  font-size: 8px;
+  letter-spacing: 0.18em;
+}
+
+.empty-state h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 780;
+  letter-spacing: -0.03em;
+}
+
+.empty-state p {
+  max-width: 360px;
+  margin: 8px auto 18px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+/* ---------- footer / toast ---------- */
+
+.site-footer {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 22px 24px 38px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  border-top: 1px solid rgba(17, 26, 23, 0.08);
+  color: #92958a;
+  font-size: 9px;
+}
+
+.footer-link {
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #6c7268;
+  font-size: 9px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  z-index: 300;
+  max-width: calc(100vw - 32px);
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  box-shadow: 0 12px 30px rgba(17, 26, 23, 0.28);
+  font-size: 11px;
+  font-weight: 550;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 14px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.toast.is-show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 980px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .result-panel {
+    position: static;
+  }
+
+  .result-column {
+    max-width: 620px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .history-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .head-stamp {
+    width: 168px;
+    height: 168px;
+  }
+
+  .stamp-circle strong {
+    font-size: 52px;
+  }
+
+  .head-stamp p {
+    bottom: 25px;
+  }
+
+  .page-head {
+    gap: 28px;
+  }
+}
+
+@media (max-width: 760px) {
+  .topbar-inner {
+    min-height: 66px;
+    padding: 0 16px;
+  }
+
+  .page {
+    padding: 0 16px 56px;
+  }
+
+  .page-head {
+    padding: 38px 0 26px;
+  }
+
+  .page-head.compact {
+    padding: 38px 0 24px;
+  }
+
+  .page-head h1 {
+    font-size: clamp(34px, 8.4vw, 48px);
+  }
+
+  .head-stamp {
+    display: none;
+  }
+
+  .lede {
+    font-size: 13px;
+  }
+
+  .form-panel {
+    padding: 20px 18px;
+  }
+
+  .result-panel {
+    padding: 20px;
+  }
+
+  .identity-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .field-grid.cols-3 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .field-grid.cols-3 .field:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .standards-panel {
+    padding: 18px;
+  }
+
+  .standards-toolbar {
+    justify-content: flex-start;
+  }
+
+  .standards-toolbar .segmented {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .scroll-hint {
+    display: block;
+  }
+}
+
+@media (max-width: 600px) {
+  .topbar-inner {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 16px 10px;
+  }
+
+  .main-nav {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .nav-item {
+    padding: 8px 4px;
+    font-size: 11px;
+  }
+
+  .nav-count {
+    display: none;
+  }
+
+  .brand-text small {
+    display: none;
+  }
+
+  .brand-text strong {
+    font-size: 13.5px;
+  }
+
+  .brand-mark {
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    font-size: 19px;
+  }
+
+  .page-head {
+    padding-top: 30px;
+  }
+
+  .page-head h1 {
+    font-size: 34px;
+  }
+
+  .eyebrow {
+    margin-bottom: 12px;
+    font-size: 8.5px;
+    letter-spacing: 0.12em;
+  }
+
+  .lede {
+    margin-top: 14px;
+    font-size: 12.5px;
+    line-height: 1.75;
+  }
+
+  .head-chips {
+    margin-top: 16px;
+    gap: 6px;
+  }
+
+  .head-chips span {
+    padding: 5px 8px;
+    font-size: 9px;
+  }
+
+  .form-panel {
+    padding: 18px 14px;
+    border-radius: 18px;
+  }
+
+  .panel-head h2,
+  .result-top h2 {
+    font-size: 18px;
+  }
+
+  .identity-grid {
+    padding: 11px;
+  }
+
+  .form-section {
+    margin-top: 21px;
+    padding-top: 20px;
+  }
+
+  .field-grid {
+    gap: 12px 10px;
+  }
+
+  .field-grid.cols-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .field-grid.cols-3 .field:last-child {
+    grid-column: auto;
+  }
+
+  .field-label {
+    font-size: 10.5px;
+  }
+
+  .field-label em {
+    font-size: 7.5px;
+  }
+
+  .input-shell {
+    min-height: 44px;
+  }
+
+  .input-shell input {
+    padding: 11px 6px 11px 11px;
+    font-size: 15px;
+  }
+
+  .gauge {
+    width: 200px;
+    height: 200px;
+  }
+
+  .gauge-total {
+    font-size: 56px;
+  }
+
+  .result-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .history-card {
+    padding: 15px;
+  }
+
+  .history-score strong {
+    font-size: 34px;
+  }
+
+  .site-footer {
+    padding: 20px 16px 32px;
+  }
+
+  .footer-link {
+    margin-left: 0;
+  }
+
+  .score-table {
+    min-width: 680px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+</style>
+</head>
+<body>
+  <svg class="svg-sprite" width="0" height="0" aria-hidden="true" focusable="false">
+    <symbol id="i-lock" viewBox="0 0 24 24">
+      <rect x="4.5" y="10.5" width="15" height="10" rx="2.5"></rect>
+      <path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"></path>
+      <path d="M12 14.5v2.2"></path>
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24">
+      <path d="m5 12.5 4.3 4.3L19 7.5"></path>
+    </symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24">
+      <path d="M5 12h14"></path>
+      <path d="m14 7 5 5-5 5"></path>
+    </symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24">
+      <rect x="8.5" y="8.5" width="11" height="11" rx="2"></rect>
+      <path d="M15.5 8.5v-2a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"></path>
+    </symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24">
+      <path d="M5 7h14"></path>
+      <path d="M9 7V4.8h6V7"></path>
+      <path d="m7 7 .8 12.2h8.4L17 7"></path>
+      <path d="M10 11v4.5M14 11v4.5"></path>
+    </symbol>
+    <symbol id="i-info" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.5"></circle>
+      <path d="M12 11v5.5"></path>
+      <path d="M12 7.8h.01"></path>
+    </symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24">
+      <path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"></path>
+      <path d="m18.5 16 .8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z"></path>
+    </symbol>
+  </svg>
+
+  <div class="js-fallback" id="jsFallback" role="alert">
+    <span class="js-fallback-icon" aria-hidden="true">!</span>
+    <div>
+      <strong>页面脚本没有正常运行</strong>
+      <p>如果你是在聊天窗口、编辑器或文件预览里打开，请改用 Chrome / Edge 直接打开本文件；也可以双击同目录的「启动体测计算器.bat」。</p>
+      <p class="js-fallback-detail" id="jsFallbackDetail"></p>
+    </div>
+  </div>
+  <script>
+    (function () {
+      function show(message) {
+        var box = document.getElementById('jsFallback');
+        if (!box) return;
+        box.hidden = false;
+        if (message) {
+          var detail = document.getElementById('jsFallbackDetail');
+          if (detail) detail.textContent = '错误信息：' + message;
+        }
+      }
+      window.addEventListener('error', function (event) {
+        show(event && event.message ? event.message : '未知脚本错误');
+      });
+      window.addEventListener('unhandledrejection', function (event) {
+        show(event && event.reason ? String(event.reason) : '未知异步错误');
+      });
+      window.__TZ_SHOW_FALLBACK__ = show;
+    })();
+  </script>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#" data-view="calc" aria-label="体测成绩计算器首页">
+        <span class="brand-mark" aria-hidden="true">体</span>
+        <span class="brand-text">
+          <strong>体测计算器</strong>
+          <small>大学生体质健康标准</small>
+        </span>
+      </a>
+      <nav class="main-nav" aria-label="主导航">
+        <button class="nav-item is-active" type="button" data-view="calc">成绩计算</button>
+        <button class="nav-item" type="button" data-view="standard">评分标准</button>
+        <button class="nav-item" type="button" data-view="history">
+          我的记录
+          <span class="nav-count" id="historyCount" hidden>0</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <!-- ============ 成绩计算 ============ -->
+    <section class="view is-active" id="view-calc">
+      <div class="page-head">
+        <div class="page-head-copy">
+          <p class="eyebrow"><span class="eyebrow-dot"></span> National Physical Fitness Standard · 2014</p>
+          <h1>输入体测数据，<br><span>马上算出成绩。</span></h1>
+          <p class="lede">按《国家学生体质健康标准（2014年修订）》大学部分计分，自动计算附加分、等级和每一项的加权得分。</p>
+          <div class="head-chips" aria-label="标准特点">
+            <span>7 项指标</span>
+            <span>100 分标准分</span>
+            <span>+20 附加分</span>
+          </div>
+        </div>
+        <div class="head-stamp" aria-hidden="true">
+          <div class="stamp-circle">
+            <strong>120</strong>
+            <small>满分</small>
+          </div>
+          <p>STANDARD<br>2014</p>
+        </div>
+      </div>
+
+      <div class="workspace">
+        <form class="panel form-panel" id="scoreForm" novalidate>
+          <div class="panel-head">
+            <div>
+              <p class="panel-kicker">Your data</p>
+              <h2>填写体测数据</h2>
+            </div>
+            <button class="text-btn" type="button" id="demoBtn">填入示例</button>
+          </div>
+
+          <div class="identity-grid">
+            <div class="control-block">
+              <span class="control-label">性别</span>
+              <div class="segmented" id="genderControl" role="group" aria-label="性别">
+                <button type="button" data-gender="male" class="is-active" aria-pressed="true">男生</button>
+                <button type="button" data-gender="female" aria-pressed="false">女生</button>
+              </div>
+            </div>
+            <div class="control-block">
+              <span class="control-label">年级</span>
+              <div class="segmented" id="yearControl" role="group" aria-label="年级">
+                <button type="button" data-year="year12" class="is-active" aria-pressed="true">大一 / 大二</button>
+                <button type="button" data-year="year34" aria-pressed="false">大三 / 大四</button>
+              </div>
+            </div>
+          </div>
+
+          <section class="form-section">
+            <div class="section-head">
+              <span class="section-no">01</span>
+              <div>
+                <h3>身体形态</h3>
+                <p>BMI 由身高和体重自动计算</p>
+              </div>
+            </div>
+            <div class="field-grid">
+              <label class="field" for="height">
+                <span class="field-label">身高 <em>Height</em></span>
+                <span class="input-shell">
+                  <input id="height" name="height" type="number" inputmode="decimal" min="100" max="250" step="0.1" placeholder="175" autocomplete="off" aria-describedby="heightError">
+                  <span class="unit">cm</span>
+                </span>
+                <span class="field-error" id="heightError" aria-live="polite"></span>
+              </label>
+              <label class="field" for="weight">
+                <span class="field-label">体重 <em>Weight</em></span>
+                <span class="input-shell">
+                  <input id="weight" name="weight" type="number" inputmode="decimal" min="25" max="300" step="0.1" placeholder="65" autocomplete="off" aria-describedby="weightError">
+                  <span class="unit">kg</span>
+                </span>
+                <span class="field-error" id="weightError" aria-live="polite"></span>
+              </label>
+            </div>
+            <div class="bmi-strip" id="bmiStrip" hidden>
+              <div class="bmi-main">
+                <span class="bmi-value" id="bmiValue">--</span>
+                <span class="bmi-caption">BMI · <strong id="bmiCategory">--</strong></span>
+              </div>
+              <div class="bmi-score">
+                <span>单项得分</span>
+                <strong id="bmiScore">--</strong>
+                <span>分</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <div class="section-head">
+              <span class="section-no">02</span>
+              <div>
+                <h3>身体机能</h3>
+                <p>肺活量取测试中的最好成绩</p>
+              </div>
+            </div>
+            <div class="field-grid">
+              <label class="field field-wide" for="vital">
+                <span class="field-label">肺活量 <em>Vital capacity</em></span>
+                <span class="input-shell">
+                  <input id="vital" name="vital" type="number" inputmode="numeric" min="500" max="9999" step="1" placeholder="4000" autocomplete="off" aria-describedby="vitalError">
+                  <span class="unit">ml</span>
+                </span>
+                <span class="field-error" id="vitalError" aria-live="polite"></span>
+              </label>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <div class="section-head">
+              <span class="section-no">03</span>
+              <div>
+                <h3>速度、柔韧与爆发力</h3>
+                <p>50 米跑、坐位体前屈、立定跳远</p>
+              </div>
+            </div>
+            <div class="field-grid cols-3">
+              <label class="field" for="sprint">
+                <span class="field-label">50 米跑 <em>Sprint</em></span>
+                <span class="input-shell">
+                  <input id="sprint" name="sprint" type="number" inputmode="decimal" min="5" max="20" step="0.01" placeholder="7.5" autocomplete="off" aria-describedby="sprintError">
+                  <span class="unit">秒</span>
+                </span>
+                <span class="field-error" id="sprintError" aria-live="polite"></span>
+              </label>
+              <label class="field" for="sitReach">
+                <span class="field-label">坐位体前屈 <em>Sit &amp; reach</em></span>
+                <span class="input-shell">
+                  <input id="sitReach" name="sitReach" type="number" inputmode="decimal" min="-30" max="50" step="0.1" placeholder="15.0" autocomplete="off" aria-describedby="sitReachError">
+                  <span class="unit">cm</span>
+                </span>
+                <span class="field-error" id="sitReachError" aria-live="polite"></span>
+              </label>
+              <label class="field" for="jump">
+                <span class="field-label">立定跳远 <em>Standing jump</em></span>
+                <span class="input-shell">
+                  <input id="jump" name="jump" type="number" inputmode="numeric" min="30" max="400" step="1" placeholder="240" autocomplete="off" aria-describedby="jumpError">
+                  <span class="unit">cm</span>
+                </span>
+                <span class="field-error" id="jumpError" aria-live="polite"></span>
+              </label>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <div class="section-head">
+              <span class="section-no">04</span>
+              <div>
+                <h3>力量</h3>
+                <p id="strengthSub">男生引体向上，女生 1 分钟仰卧起坐</p>
+              </div>
+            </div>
+            <div class="field-grid">
+              <label class="field field-wide" for="strength">
+                <span class="field-label">
+                  <span id="strengthLabel">引体向上</span>
+                  <em>Strength</em>
+                  <span class="ref-badge" id="strengthRef">满分 19 次</span>
+                </span>
+                <span class="input-shell">
+                  <input id="strength" name="strength" type="number" inputmode="numeric" min="0" max="120" step="1" placeholder="12" autocomplete="off" aria-describedby="strengthError">
+                  <span class="unit" id="strengthUnit">次</span>
+                </span>
+                <span class="field-error" id="strengthError" aria-live="polite"></span>
+              </label>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <div class="section-head">
+              <span class="section-no">05</span>
+              <div>
+                <h3>耐力</h3>
+                <p>男生 1000 米跑，女生 800 米跑</p>
+              </div>
+            </div>
+            <div class="field-grid">
+              <div class="field field-wide">
+                <span class="field-label">
+                  <span id="runLabel">1000 米跑</span>
+                  <em>Endurance</em>
+                  <span class="ref-badge" id="runRef">满分 3′17″</span>
+                </span>
+                <div class="time-shell">
+                  <span class="input-shell time-part">
+                    <input id="runMin" name="runMin" type="number" inputmode="numeric" min="0" max="20" step="1" placeholder="4" autocomplete="off" aria-label="耐力跑分钟数" aria-describedby="runError">
+                    <span class="unit">分</span>
+                  </span>
+                  <span class="time-colon" aria-hidden="true">:</span>
+                  <span class="input-shell time-part">
+                    <input id="runSec" name="runSec" type="number" inputmode="numeric" min="0" max="59" step="1" placeholder="05" autocomplete="off" aria-label="耐力跑秒数" aria-describedby="runError">
+                    <span class="unit">秒</span>
+                  </span>
+                </div>
+                <span class="field-error" id="runError" aria-live="polite"></span>
+              </div>
+            </div>
+          </section>
+
+          <div class="form-foot">
+            <p class="form-note">
+              <svg class="icon" aria-hidden="true"><use href="#i-lock"></use></svg>
+              所有计算在本地完成，不会上传
+            </p>
+            <button class="ghost-btn small" type="button" id="resetBtn">清空重填</button>
+          </div>
+        </form>
+
+        <aside class="result-column" aria-label="评分结果">
+          <div class="panel result-panel" id="resultPanel">
+            <div class="result-top">
+              <div>
+                <p class="panel-kicker">Your score</p>
+                <h2>本次评分</h2>
+              </div>
+              <span class="grade-badge" id="gradeBadge" data-grade="none">待填写</span>
+            </div>
+
+            <div class="gauge-block">
+              <div class="gauge" id="gauge">
+                <svg viewBox="0 0 220 220" role="img" aria-label="体测总分仪表盘">
+                  <circle class="gauge-track" cx="110" cy="110" r="92"></circle>
+                  <circle class="gauge-progress" id="gaugeProgress" cx="110" cy="110" r="92" pathLength="100"></circle>
+                </svg>
+                <div class="gauge-center">
+                  <span class="gauge-total" id="totalScore">--</span>
+                  <span class="gauge-cap">总分 / 120</span>
+                </div>
+              </div>
+              <div class="score-split">
+                <div class="split-item">
+                  <span>标准分</span>
+                  <strong id="baseScore">--</strong>
+                  <small>/ 100</small>
+                </div>
+                <span class="split-divider" aria-hidden="true"></span>
+                <div class="split-item">
+                  <span>附加分</span>
+                  <strong id="bonusScore">--</strong>
+                  <small>/ 20</small>
+                </div>
+              </div>
+              <p class="level-hint" id="levelHint" aria-live="polite">填完 7 项后自动计算</p>
+            </div>
+
+            <div class="checklist" id="checklist">
+              <div class="checklist-head">
+                <span>填写进度</span>
+                <strong id="checklistCount">0 / 7</strong>
+              </div>
+              <ul id="checklistItems"></ul>
+            </div>
+
+            <div class="breakdown" id="breakdown" hidden>
+              <div class="breakdown-head">
+                <h3>各项得分</h3>
+                <span>单项分 × 权重</span>
+              </div>
+              <div id="breakdownList"></div>
+              <div class="insight" id="insight" hidden></div>
+            </div>
+
+            <div class="result-actions" id="resultActions" hidden>
+              <button class="primary-btn" type="button" id="saveBtn">保存到我的记录</button>
+              <button class="ghost-btn" type="button" id="copyBtn">
+                <svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg>
+                复制成绩单
+              </button>
+            </div>
+
+            <p class="privacy-note">数据只在你的浏览器中计算和保存，不会上传。</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ============ 评分标准 ============ -->
+    <section class="view" id="view-standard" hidden>
+      <div class="page-head compact">
+        <div class="page-head-copy">
+          <p class="eyebrow"><span class="eyebrow-dot"></span> Scoring tables</p>
+          <h1>评分标准速查</h1>
+          <p class="lede">对照官方评分表，看看每个成绩对应多少分。切换性别和年级，表格会同步变化。</p>
+        </div>
+      </div>
+
+      <div class="panel standards-panel">
+        <div class="standards-toolbar">
+          <div class="segmented" id="stdGender" role="group" aria-label="标准表性别">
+            <button type="button" data-gender="male" class="is-active" aria-pressed="true">男生</button>
+            <button type="button" data-gender="female" aria-pressed="false">女生</button>
+          </div>
+          <div class="segmented" id="stdYear" role="group" aria-label="标准表年级">
+            <button type="button" data-year="year12" class="is-active" aria-pressed="true">大一 / 大二</button>
+            <button type="button" data-year="year34" aria-pressed="false">大三 / 大四</button>
+          </div>
+        </div>
+        <p class="scroll-hint">左右滑动，查看全部 7 项 →</p>
+        <div class="table-wrap">
+          <table class="score-table" id="scoreTable">
+            <thead id="scoreTableHead"></thead>
+            <tbody id="scoreTableBody"></tbody>
+          </table>
+        </div>
+        <p class="table-note">成绩达到某一档标准即获得该档分数；未达到更高一档时，按已达标档位计分。表中「—」表示该档位在官方评分表中为空。</p>
+      </div>
+
+      <div class="info-grid">
+        <div class="panel mini-panel">
+          <div class="mini-panel-head">
+            <h3>力量项目附加分</h3>
+            <span>最高 +10</span>
+          </div>
+          <p class="mini-panel-desc" id="stdStrengthNote">--</p>
+          <div id="strengthBonusTable"></div>
+        </div>
+        <div class="panel mini-panel">
+          <div class="mini-panel-head">
+            <h3>耐力跑附加分</h3>
+            <span>最高 +10</span>
+          </div>
+          <p class="mini-panel-desc" id="stdRunNote">--</p>
+          <div id="runBonusTable"></div>
+        </div>
+        <div class="panel mini-panel">
+          <div class="mini-panel-head">
+            <h3>总分怎么算</h3>
+          </div>
+          <div class="formula-box">标准分 = Σ（单项得分 × 权重）</div>
+          <div class="formula-box">总分 = 标准分 + 附加分</div>
+          <ul class="rule-list">
+            <li><span>优秀</span><strong>90.0 分及以上</strong></li>
+            <li><span>良好</span><strong>80.0 – 89.9 分</strong></li>
+            <li><span>及格</span><strong>60.0 – 79.9 分</strong></li>
+            <li><span>不及格</span><strong>60.0 分以下</strong></li>
+          </ul>
+          <p class="bmi-note">BMI 正常范围：男生 17.9–23.9，女生 17.2–23.9。低体重 / 超重得 80 分，肥胖得 60 分；BMI 四舍五入保留 1 位小数。</p>
+        </div>
+        <div class="panel mini-panel">
+          <div class="mini-panel-head">
+            <h3>指标权重</h3>
+            <span>合计 100%</span>
+          </div>
+          <div class="weight-list" id="weightList"></div>
+        </div>
+      </div>
+
+      <p class="source-note">
+        依据教育部《国家学生体质健康标准（2014年修订）》（教体艺〔2014〕5号）大学部分整理。各校执行细则可能略有差异，请以本校通知为准。
+      </p>
+    </section>
+
+    <!-- ============ 我的记录 ============ -->
+    <section class="view" id="view-history" hidden>
+      <div class="page-head compact">
+        <div class="page-head-copy">
+          <p class="eyebrow"><span class="eyebrow-dot"></span> Saved results</p>
+          <h1>我的记录</h1>
+          <p class="lede">每次保存的成绩会留在这里，方便对比不同学期的变化。记录只保存在当前浏览器。</p>
+        </div>
+      </div>
+
+      <div class="history-toolbar">
+        <span id="historySummary">共 0 条记录</span>
+        <button class="text-btn danger" type="button" id="clearHistoryBtn" hidden>清空全部</button>
+      </div>
+
+      <div class="history-list" id="historyList"></div>
+
+      <div class="empty-state panel" id="historyEmpty">
+        <div class="empty-illustration" aria-hidden="true">
+          <span>120</span>
+          <small>满分</small>
+        </div>
+        <h2>还没有保存过成绩</h2>
+        <p>填完体测数据并保存后，这里会生成一张属于你的成绩卡。</p>
+        <button class="primary-btn" type="button" data-view="calc">去算一次</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>体测计算器 · 大学生版</span>
+    <span>依据《国家学生体质健康标准（2014年修订）》</span>
+    <button class="footer-link" type="button" data-view="standard">查看评分标准</button>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+/*
+ * 大学生体质健康标准评分引擎
+ * 依据《国家学生体质健康标准（2014年修订）》（教体艺〔2014〕5号）大学部分整理。
+ * 纯函数、无依赖，可在浏览器和 Node.js 中使用。
+ */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) {
+    module.exports = factory();
+  } else {
+    root.TZ = factory();
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+
+  var SCORES = [100, 95, 90, 85, 80, 78, 76, 74, 72, 70, 68, 66, 64, 62, 60, 50, 40, 30, 20, 10];
+
+  var WEIGHTS = {
+    bmi: 15,
+    vital: 15,
+    sprint: 20,
+    sitReach: 10,
+    jump: 10,
+    strength: 10,
+    run: 20
+  };
+
+  var DIRECTIONS = {
+    vital: 'high',
+    sprint: 'low',
+    sitReach: 'high',
+    jump: 'high',
+    strength: 'high',
+    run: 'low'
+  };
+
+  var GENDER_LABELS = { male: '男生', female: '女生' };
+  var YEAR_LABELS = { year12: '大一 / 大二', year34: '大三 / 大四' };
+
+  var ITEM_META = {
+    bmi: { name: '体重指数', unit: '' },
+    vital: { name: '肺活量', unit: 'ml' },
+    sprint: { name: '50 米跑', unit: '秒' },
+    sitReach: { name: '坐位体前屈', unit: 'cm' },
+    jump: { name: '立定跳远', unit: 'cm' },
+    strength: { name: '引体向上', unit: '次' },
+    run: { name: '1000 米跑', unit: '' }
+  };
+
+  // 每行对应 SCORES 中的一档；null 表示该档位在官方表中为空。
+  var TABLES = {
+    male: {
+      year12: {
+        vital: [5040, 4920, 4800, 4550, 4300, 4180, 4060, 3940, 3820, 3700, 3580, 3460, 3340, 3220, 3100, 2940, 2780, 2620, 2460, 2300],
+        sprint: [6.7, 6.8, 6.9, 7.0, 7.1, 7.3, 7.5, 7.7, 7.9, 8.1, 8.3, 8.5, 8.7, 8.9, 9.1, 9.3, 9.5, 9.7, 9.9, 10.1],
+        sitReach: [24.9, 23.1, 21.3, 19.5, 17.7, 16.3, 14.9, 13.5, 12.1, 10.7, 9.3, 7.9, 6.5, 5.1, 3.7, 2.7, 1.7, 0.7, -0.3, -1.3],
+        jump: [273, 268, 263, 256, 248, 244, 240, 236, 232, 228, 224, 220, 216, 212, 208, 203, 198, 193, 188, 183],
+        strength: [19, 18, 17, 16, 15, null, 14, null, 13, null, 12, null, 11, null, 10, 9, 8, 7, 6, 5],
+        run: [197, 202, 207, 214, 222, 227, 232, 237, 242, 247, 252, 257, 262, 267, 272, 292, 312, 332, 352, 372]
+      },
+      year34: {
+        vital: [5140, 5020, 4900, 4650, 4400, 4280, 4160, 4040, 3920, 3800, 3680, 3560, 3440, 3320, 3200, 3030, 2860, 2690, 2520, 2350],
+        sprint: [6.6, 6.7, 6.8, 6.9, 7.0, 7.2, 7.4, 7.6, 7.8, 8.0, 8.2, 8.4, 8.6, 8.8, 9.0, 9.2, 9.4, 9.6, 9.8, 10.0],
+        sitReach: [25.1, 23.3, 21.5, 19.9, 18.2, 16.8, 15.4, 14.0, 12.6, 11.2, 9.8, 8.4, 7.0, 5.6, 4.2, 3.2, 2.2, 1.2, 0.2, -0.8],
+        jump: [275, 270, 265, 258, 250, 246, 242, 238, 234, 230, 226, 222, 218, 214, 210, 205, 200, 195, 190, 185],
+        strength: [20, 19, 18, 17, 16, null, 15, null, 14, null, 13, null, 12, null, 11, 10, 9, 8, 7, 6],
+        run: [195, 200, 205, 212, 220, 225, 230, 235, 240, 245, 250, 255, 260, 265, 270, 290, 310, 330, 350, 370]
+      }
+    },
+    female: {
+      year12: {
+        vital: [3400, 3350, 3300, 3150, 3000, 2900, 2800, 2700, 2600, 2500, 2400, 2300, 2200, 2100, 2000, 1960, 1920, 1880, 1840, 1800],
+        sprint: [7.5, 7.6, 7.7, 8.0, 8.3, 8.5, 8.7, 8.9, 9.1, 9.3, 9.5, 9.7, 9.9, 10.1, 10.3, 10.5, 10.7, 10.9, 11.1, 11.3],
+        sitReach: [25.8, 24.0, 22.2, 20.6, 19.0, 17.7, 16.4, 15.1, 13.8, 12.5, 11.2, 9.9, 8.6, 7.3, 6.0, 5.2, 4.4, 3.6, 2.8, 2.0],
+        jump: [207, 201, 195, 188, 181, 178, 175, 172, 169, 166, 163, 160, 157, 154, 151, 146, 141, 136, 131, 126],
+        strength: [56, 54, 52, 49, 46, 44, 42, 40, 38, 36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16],
+        run: [198, 204, 210, 217, 224, 229, 234, 239, 244, 249, 254, 259, 264, 269, 274, 284, 294, 304, 314, 324]
+      },
+      year34: {
+        vital: [3450, 3400, 3350, 3200, 3050, 2950, 2850, 2750, 2650, 2550, 2450, 2350, 2250, 2150, 2050, 2010, 1970, 1930, 1890, 1850],
+        sprint: [7.4, 7.5, 7.6, 7.9, 8.2, 8.4, 8.6, 8.8, 9.0, 9.2, 9.4, 9.6, 9.8, 10.0, 10.2, 10.4, 10.6, 10.8, 11.0, 11.2],
+        sitReach: [26.3, 24.4, 22.4, 21.0, 19.5, 18.2, 16.9, 15.6, 14.3, 13.0, 11.7, 10.4, 9.1, 7.8, 6.5, 5.7, 4.9, 4.1, 3.3, 2.5],
+        jump: [208, 202, 196, 189, 182, 179, 176, 173, 170, 167, 164, 161, 158, 155, 152, 147, 142, 137, 132, 127],
+        strength: [57, 55, 53, 50, 47, 45, 43, 41, 39, 37, 35, 33, 31, 29, 27, 25, 23, 21, 19, 17],
+        run: [196, 202, 208, 215, 222, 227, 232, 237, 242, 247, 252, 257, 262, 267, 272, 282, 292, 302, 312, 322]
+      }
+    }
+  };
+
+  // 附加分：达到 100 分标准后，继续超出的次数 / 缩短的秒数。
+  var BONUS_STRENGTH = {
+    male: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    female: [2, 4, 6, 7, 8, 9, 10, 11, 12, 13]
+  };
+  var BONUS_RUN = {
+    male: [4, 8, 12, 16, 20, 23, 26, 29, 32, 35],
+    female: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+  };
+
+  var EPS = 1e-9;
+
+  function round1(n) {
+    return Math.round((n + 1e-10) * 10) / 10;
+  }
+
+  function clamp(n, min, max) {
+    return Math.min(max, Math.max(min, n));
+  }
+
+  function formatTime(totalSeconds) {
+    var s = Math.round(totalSeconds);
+    var m = Math.floor(s / 60);
+    var sec = s % 60;
+    return m + '′' + String(sec).padStart(2, '0') + '″';
+  }
+
+  function parseTime(min, sec) {
+    return Number(min) * 60 + Number(sec);
+  }
+
+  function bmiInfo(heightCm, weightKg, gender) {
+    var heightM = Number(heightCm) / 100;
+    var raw = Number(weightKg) / (heightM * heightM);
+    var bmi = round1(raw);
+    var category;
+    var score;
+
+    if (gender === 'female') {
+      if (bmi <= 17.1) {
+        category = '低体重';
+        score = 80;
+      } else if (bmi <= 23.9) {
+        category = '正常';
+        score = 100;
+      } else if (bmi <= 27.9) {
+        category = '超重';
+        score = 80;
+      } else {
+        category = '肥胖';
+        score = 60;
+      }
+    } else {
+      if (bmi <= 17.8) {
+        category = '低体重';
+        score = 80;
+      } else if (bmi <= 23.9) {
+        category = '正常';
+        score = 100;
+      } else if (bmi <= 27.9) {
+        category = '超重';
+        score = 80;
+      } else {
+        category = '肥胖';
+        score = 60;
+      }
+    }
+
+    return { bmi: bmi, raw: raw, category: category, score: score };
+  }
+
+  function tableScore(value, table, direction) {
+    if (table == null) return 0;
+    for (var i = 0; i < table.length; i++) {
+      var threshold = table[i];
+      if (threshold == null) continue;
+      if (direction === 'high' ? value >= threshold - EPS : value <= threshold + EPS) {
+        return SCORES[i];
+      }
+    }
+    return 0;
+  }
+
+  function bonusFromThresholds(delta, thresholds) {
+    var bonus = 0;
+    for (var i = 0; i < thresholds.length; i++) {
+      if (delta >= thresholds[i] - EPS) bonus = i + 1;
+    }
+    return bonus;
+  }
+
+  function bonusFor(key, value, gender, yearGroup) {
+    var table = TABLES[gender][yearGroup];
+    if (key === 'strength') {
+      var extra = value - table.strength[0];
+      return {
+        points: bonusFromThresholds(extra, BONUS_STRENGTH[gender]),
+        detail: extra > 0 ? '超出 ' + Math.round(extra) + ' 次' : ''
+      };
+    }
+    if (key === 'run') {
+      var faster = table.run[0] - value;
+      return {
+        points: bonusFromThresholds(faster, BONUS_RUN[gender]),
+        detail: faster > 0 ? '快 ' + Math.round(faster) + ' 秒' : ''
+      };
+    }
+    return { points: 0, detail: '' };
+  }
+
+  function validate(input) {
+    var errors = {};
+    var gender = input.gender === 'female' ? 'female' : 'male';
+    var yearGroup = input.yearGroup === 'year34' ? 'year34' : 'year12';
+    var values = { gender: gender, yearGroup: yearGroup };
+
+    function num(key) {
+      var raw = input[key];
+      if (raw === '' || raw == null) return NaN;
+      var n = Number(raw);
+      return Number.isFinite(n) ? n : NaN;
+    }
+
+    var height = num('height');
+    if (!Number.isFinite(height) || height < 100 || height > 250) {
+      errors.height = '请输入 100–250 cm 之间的身高';
+    } else {
+      values.height = height;
+    }
+
+    var weight = num('weight');
+    if (!Number.isFinite(weight) || weight < 25 || weight > 300) {
+      errors.weight = '请输入 25–300 kg 之间的体重';
+    } else {
+      values.weight = weight;
+    }
+
+    var vital = num('vital');
+    if (!Number.isFinite(vital) || vital < 500 || vital > 9999) {
+      errors.vital = '请输入 500–9999 ml 之间的肺活量';
+    } else {
+      values.vital = vital;
+    }
+
+    var sprint = num('sprint');
+    if (!Number.isFinite(sprint) || sprint < 5 || sprint > 20) {
+      errors.sprint = '请输入 5.0–20.0 秒之间的 50 米成绩';
+    } else {
+      values.sprint = sprint;
+    }
+
+    var sitReach = num('sitReach');
+    if (!Number.isFinite(sitReach) || sitReach < -30 || sitReach > 50) {
+      errors.sitReach = '请输入 -30–50 cm 之间的坐位体前屈成绩';
+    } else {
+      values.sitReach = sitReach;
+    }
+
+    var jump = num('jump');
+    if (!Number.isFinite(jump) || jump < 30 || jump > 400) {
+      errors.jump = '请输入 30–400 cm 之间的立定跳远成绩';
+    } else {
+      values.jump = jump;
+    }
+
+    var strength = num('strength');
+    if (!Number.isFinite(strength) || strength < 0 || strength > 120 || !Number.isInteger(strength)) {
+      errors.strength = '请输入 0–120 之间的整数次数';
+    } else {
+      values.strength = strength;
+    }
+
+    var runMin = num('runMin');
+    var runSec = num('runSec');
+    if (
+      !Number.isFinite(runMin) ||
+      !Number.isInteger(runMin) ||
+      runMin < 0 ||
+      runMin > 20 ||
+      !Number.isFinite(runSec) ||
+      !Number.isInteger(runSec) ||
+      runSec < 0 ||
+      runSec > 59
+    ) {
+      errors.run = '请输入有效的分、秒（秒数 0–59）';
+    } else {
+      var runSeconds = parseTime(runMin, runSec);
+      if (runSeconds < 120 || runSeconds > 1200) {
+        errors.run = '耐力跑成绩应在 2:00–20:00 之间';
+      } else {
+        values.runMin = runMin;
+        values.runSec = runSec;
+        values.run = runSeconds;
+      }
+    }
+
+    return {
+      valid: Object.keys(errors).length === 0,
+      errors: errors,
+      values: values
+    };
+  }
+
+  function gradeFor(total) {
+    if (total >= 90) return '优秀';
+    if (total >= 80) return '良好';
+    if (total >= 60) return '及格';
+    return '不及格';
+  }
+
+  function nextLevelFor(total) {
+    if (total < 60) return { label: '及格', need: round1(60 - total) };
+    if (total < 80) return { label: '良好', need: round1(80 - total) };
+    if (total < 90) return { label: '优秀', need: round1(90 - total) };
+    return null;
+  }
+
+  function itemName(key, gender) {
+    if (key === 'strength') return gender === 'female' ? '1 分钟仰卧起坐' : '引体向上';
+    if (key === 'run') return gender === 'female' ? '800 米跑' : '1000 米跑';
+    return ITEM_META[key].name;
+  }
+
+  function calculate(input) {
+    var checked = validate(input);
+    if (!checked.valid) {
+      return { valid: false, errors: checked.errors };
+    }
+
+    var v = checked.values;
+    var gender = v.gender;
+    var yearGroup = v.yearGroup;
+    var table = TABLES[gender][yearGroup];
+    var bmi = bmiInfo(v.height, v.weight, gender);
+
+    var items = [];
+    items.push({
+      key: 'bmi',
+      name: '体重指数',
+      value: bmi.bmi,
+      display: bmi.bmi.toFixed(1),
+      unit: '',
+      score: bmi.score,
+      weight: WEIGHTS.bmi,
+      weighted: round1((bmi.score * WEIGHTS.bmi) / 100),
+      bonus: 0,
+      bonusDetail: '',
+      note: bmi.category
+    });
+
+    var rawItems = [
+      { key: 'vital', value: v.vital, display: String(Math.round(v.vital)) },
+      { key: 'sprint', value: v.sprint, display: String(Number(v.sprint.toFixed(2))) },
+      { key: 'sitReach', value: v.sitReach, display: String(Number(v.sitReach.toFixed(1))) },
+      { key: 'jump', value: v.jump, display: String(Math.round(v.jump)) },
+      { key: 'strength', value: v.strength, display: String(v.strength) },
+      { key: 'run', value: v.run, display: formatTime(v.run) }
+    ];
+
+    rawItems.forEach(function (row) {
+      var score = tableScore(row.value, table[row.key], DIRECTIONS[row.key]);
+      var bonus = bonusFor(row.key, row.value, gender, yearGroup);
+      items.push({
+        key: row.key,
+        name: itemName(row.key, gender),
+        value: row.value,
+        display: row.display,
+        unit: row.key === 'run' ? '' : ITEM_META[row.key].unit,
+        score: score,
+        weight: WEIGHTS[row.key],
+        weighted: round1((score * WEIGHTS[row.key]) / 100),
+        bonus: bonus.points,
+        bonusDetail: bonus.detail,
+        note: ''
+      });
+    });
+
+    var baseRaw = items.reduce(function (sum, item) {
+      return sum + (item.score * item.weight) / 100;
+    }, 0);
+    var bonusTotal = items.reduce(function (sum, item) {
+      return sum + item.bonus;
+    }, 0);
+    var base = round1(baseRaw);
+    var total = round1(clamp(baseRaw + bonusTotal, 0, 120));
+    var grade = gradeFor(total);
+
+    var weakest = null;
+    items.forEach(function (item) {
+      var lost = ((100 - item.score) * item.weight) / 100;
+      if (lost > 0 && (!weakest || lost > weakest.lost)) {
+        weakest = { key: item.key, name: item.name, score: item.score, lost: round1(lost) };
+      }
+    });
+
+    return {
+      valid: true,
+      gender: gender,
+      yearGroup: yearGroup,
+      genderLabel: GENDER_LABELS[gender],
+      yearLabel: YEAR_LABELS[yearGroup],
+      bmi: bmi,
+      items: items,
+      base: base,
+      bonus: bonusTotal,
+      total: total,
+      grade: grade,
+      nextLevel: nextLevelFor(total),
+      weakest: weakest,
+      values: v
+    };
+  }
+
+  function summaryText(result) {
+    if (!result || !result.valid) return '';
+    var lines = [];
+    lines.push('体测成绩单 · ' + result.genderLabel + ' · ' + result.yearLabel);
+    lines.push('总分：' + result.total.toFixed(1) + ' / 120（' + result.grade + '）');
+    lines.push('标准分：' + result.base.toFixed(1) + ' · 附加分：' + result.bonus.toFixed(1));
+    lines.push('');
+    result.items.forEach(function (item) {
+      var line = item.name + '：' + item.display + (item.unit ? ' ' + item.unit : '') + '（' + item.score + ' 分）';
+      if (item.bonus > 0) line += ' +' + item.bonus + ' 附加分';
+      lines.push(line);
+    });
+    lines.push('');
+    lines.push('依据《国家学生体质健康标准（2014年修订）》计算');
+    return lines.join('\n');
+  }
+
+  return {
+    SCORES: SCORES,
+    WEIGHTS: WEIGHTS,
+    DIRECTIONS: DIRECTIONS,
+    GENDER_LABELS: GENDER_LABELS,
+    YEAR_LABELS: YEAR_LABELS,
+    ITEM_META: ITEM_META,
+    TABLES: TABLES,
+    BONUS_STRENGTH: BONUS_STRENGTH,
+    BONUS_RUN: BONUS_RUN,
+    round1: round1,
+    formatTime: formatTime,
+    parseTime: parseTime,
+    bmiInfo: bmiInfo,
+    tableScore: tableScore,
+    bonusFor: bonusFor,
+    validate: validate,
+    gradeFor: gradeFor,
+    nextLevelFor: nextLevelFor,
+    calculate: calculate,
+    summaryText: summaryText
+  };
+});
+
+</script>
+  <script>
+/* global TZ */
+(function () {
+  'use strict';
+
+  var DRAFT_KEY = 'tizhi.draft.v1';
+  var RECORDS_KEY = 'tizhi.records.v1';
+  var MAX_RECORDS = 30;
+
+  var state = {
+    view: 'calc',
+    gender: 'male',
+    yearGroup: 'year12',
+    stdGender: 'male',
+    stdYear: 'year12',
+    touched: {},
+    result: null,
+    saved: false
+  };
+
+  var FIELDS = ['height', 'weight', 'vital', 'sprint', 'sitReach', 'jump', 'strength', 'runMin', 'runSec'];
+  var CHECK_KEYS = ['bmi', 'vital', 'sprint', 'sitReach', 'jump', 'strength', 'run'];
+  var VALIDATION_KEYS = ['height', 'weight', 'vital', 'sprint', 'sitReach', 'jump', 'strength', 'run'];
+
+  function $(id) {
+    return document.getElementById(id);
+  }
+
+  var el = {};
+  var toastTimer = null;
+  var draftTimer = null;
+
+  function cacheDom() {
+    el.form = $('scoreForm');
+    el.genderControl = $('genderControl');
+    el.yearControl = $('yearControl');
+    el.bmiStrip = $('bmiStrip');
+    el.bmiValue = $('bmiValue');
+    el.bmiCategory = $('bmiCategory');
+    el.bmiScore = $('bmiScore');
+    el.resultPanel = $('resultPanel');
+    el.gradeBadge = $('gradeBadge');
+    el.totalScore = $('totalScore');
+    el.baseScore = $('baseScore');
+    el.bonusScore = $('bonusScore');
+    el.gaugeProgress = $('gaugeProgress');
+    el.levelHint = $('levelHint');
+    el.checklist = $('checklist');
+    el.checklistCount = $('checklistCount');
+    el.checklistItems = $('checklistItems');
+    el.breakdown = $('breakdown');
+    el.breakdownList = $('breakdownList');
+    el.insight = $('insight');
+    el.resultActions = $('resultActions');
+    el.saveBtn = $('saveBtn');
+    el.copyBtn = $('copyBtn');
+    el.strengthLabel = $('strengthLabel');
+    el.strengthSub = $('strengthSub');
+    el.strengthRef = $('strengthRef');
+    el.strengthUnit = $('strengthUnit');
+    el.runLabel = $('runLabel');
+    el.runRef = $('runRef');
+    el.toast = $('toast');
+    el.historyList = $('historyList');
+    el.historyEmpty = $('historyEmpty');
+    el.historySummary = $('historySummary');
+    el.historyCount = $('historyCount');
+    el.clearHistoryBtn = $('clearHistoryBtn');
+    el.stdGender = $('stdGender');
+    el.stdYear = $('stdYear');
+    el.scoreTableHead = $('scoreTableHead');
+    el.scoreTableBody = $('scoreTableBody');
+    el.stdStrengthNote = $('stdStrengthNote');
+    el.stdRunNote = $('stdRunNote');
+    el.strengthBonusTable = $('strengthBonusTable');
+    el.runBonusTable = $('runBonusTable');
+    el.weightList = $('weightList');
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, function (ch) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+    });
+  }
+
+  function readInput() {
+    var input = { gender: state.gender, yearGroup: state.yearGroup };
+    FIELDS.forEach(function (key) {
+      input[key] = $(key).value.trim();
+    });
+    return input;
+  }
+
+  function setInputValues(values) {
+    FIELDS.forEach(function (key) {
+      $(key).value = values && values[key] != null ? values[key] : '';
+    });
+  }
+
+  function clearSensitiveValues() {
+    $('strength').value = '';
+    $('runMin').value = '';
+    $('runSec').value = '';
+    state.touched.strength = false;
+    state.touched.run = false;
+  }
+
+  function setSegmented(container, attr, value) {
+    if (!container) return;
+    Array.prototype.forEach.call(container.querySelectorAll('button'), function (btn) {
+      var active = btn.getAttribute('data-' + attr) === value;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  }
+
+  function updateControls() {
+    setSegmented(el.genderControl, 'gender', state.gender);
+    setSegmented(el.yearControl, 'year', state.yearGroup);
+  }
+
+  function updateStandardControls() {
+    setSegmented(el.stdGender, 'gender', state.stdGender);
+    setSegmented(el.stdYear, 'year', state.stdYear);
+  }
+
+  function updateDynamicLabels() {
+    var female = state.gender === 'female';
+    var table = TZ.TABLES[state.gender][state.yearGroup];
+    el.strengthLabel.textContent = female ? '1 分钟仰卧起坐' : '引体向上';
+    el.strengthSub.textContent = female ? '1 分钟内完成次数，动作需规范' : '按完成次数计分，动作需规范';
+    el.strengthRef.textContent = '满分 ' + table.strength[0] + ' 次';
+    el.strengthUnit.textContent = '次';
+    el.runLabel.textContent = female ? '800 米跑' : '1000 米跑';
+    el.runRef.textContent = '满分 ' + TZ.formatTime(table.run[0]);
+    $('strength').placeholder = female ? '40' : '12';
+    $('runMin').placeholder = female ? '3' : '4';
+    $('runSec').placeholder = female ? '40' : '05';
+    updateChecklistLabels();
+  }
+
+  function updateChecklistLabels() {
+    if (!el.checklistItems) return;
+    var female = state.gender === 'female';
+    var labels = {
+      bmi: '身体形态',
+      vital: '肺活量',
+      sprint: '50 米跑',
+      sitReach: '坐位体前屈',
+      jump: '立定跳远',
+      strength: female ? '仰卧起坐' : '引体向上',
+      run: female ? '800 米跑' : '1000 米跑'
+    };
+    CHECK_KEYS.forEach(function (key) {
+      var item = el.checklistItems.querySelector('[data-check="' + key + '"] .check-label');
+      if (item) item.textContent = labels[key];
+    });
+  }
+
+  function populateChecklist() {
+    var fragment = document.createDocumentFragment();
+    CHECK_KEYS.forEach(function (key) {
+      var li = document.createElement('li');
+      li.setAttribute('data-check', key);
+      li.innerHTML = '<span class="check-dot" aria-hidden="true"></span><span class="check-label"></span>';
+      fragment.appendChild(li);
+    });
+    el.checklistItems.appendChild(fragment);
+    updateChecklistLabels();
+  }
+
+  function isDone(key, checked) {
+    if (key === 'bmi') return !checked.errors.height && !checked.errors.weight;
+    return !checked.errors[key];
+  }
+
+  function countDone(checked) {
+    return CHECK_KEYS.filter(function (key) {
+      return isDone(key, checked);
+    }).length;
+  }
+
+  function renderChecklist(checked, count) {
+    Array.prototype.forEach.call(el.checklistItems.children, function (li) {
+      var key = li.getAttribute('data-check');
+      li.classList.toggle('is-done', isDone(key, checked));
+    });
+    el.checklistCount.textContent = count + ' / 7';
+  }
+
+  function renderBmi(checked) {
+    if (checked.values.height == null || checked.values.weight == null) {
+      el.bmiStrip.hidden = true;
+      return;
+    }
+    var info = TZ.bmiInfo(checked.values.height, checked.values.weight, state.gender);
+    el.bmiStrip.hidden = false;
+    el.bmiStrip.setAttribute('data-category', info.category);
+    el.bmiValue.textContent = info.bmi.toFixed(1);
+    el.bmiCategory.textContent = info.category;
+    el.bmiScore.textContent = info.score;
+  }
+
+  function renderErrors(checked) {
+    VALIDATION_KEYS.forEach(function (key) {
+      var message = state.touched[key] ? checked.errors[key] : '';
+      var errorEl = $(key + 'Error');
+      if (errorEl) errorEl.textContent = message || '';
+      var field = key === 'run' ? $('runMin').closest('.field') : $(key).closest('.field');
+      if (field) field.classList.toggle('is-invalid', Boolean(message));
+    });
+  }
+
+  function formatItemValue(item) {
+    var value = item.display;
+    if (item.key === 'vital') {
+      value = Number(item.display).toLocaleString('zh-CN');
+    }
+    var unit = item.unit ? ' ' + item.unit : '';
+    var note = item.note ? ' · ' + item.note : '';
+    return value + unit + note;
+  }
+
+  function renderBreakdown(result) {
+    var fragment = document.createDocumentFragment();
+    result.items.forEach(function (item) {
+      var row = document.createElement('div');
+      row.className = 'score-row';
+      var barClass = item.score < 60 ? 'is-low' : item.score < 80 ? 'is-mid' : '';
+      var bonus = item.bonus > 0
+        ? '<span class="bonus-flag" title="附加分 +' + item.bonus + '">+' + item.bonus + '</span>'
+        : '';
+      row.innerHTML =
+        '<div class="score-row-head">' +
+          '<div class="score-name">' + escapeHtml(item.name) +
+            '<small>' + escapeHtml(formatItemValue(item)) + '</small>' +
+          '</div>' +
+          '<div class="score-value"><b>' + item.score + '</b><span>分</span>' + bonus + '</div>' +
+        '</div>' +
+        '<div class="score-row-foot">' +
+          '<div class="mini-bar"><span class="' + barClass + '" style="width:' + item.score + '%"></span></div>' +
+          '<span class="weighted">×' + item.weight + '% · ' + item.weighted.toFixed(1) + '</span>' +
+        '</div>';
+      fragment.appendChild(row);
+    });
+    el.breakdownList.innerHTML = '';
+    el.breakdownList.appendChild(fragment);
+
+    if (result.weakest) {
+      el.insight.hidden = false;
+      el.insight.innerHTML =
+        '<span class="insight-icon" aria-hidden="true">!</span>' +
+        '<div><strong>提分空间最大：' + escapeHtml(result.weakest.name) + '</strong>' +
+        '<p>当前 ' + result.weakest.score + ' 分，加权后还有 ' + result.weakest.lost.toFixed(1) + ' 分提升空间。</p></div>';
+    } else {
+      el.insight.hidden = true;
+      el.insight.innerHTML = '';
+    }
+  }
+
+  function resetSaveButton() {
+    el.saveBtn.disabled = false;
+    el.saveBtn.textContent = '保存到我的记录';
+  }
+
+  function renderEmpty(checked, count) {
+    state.saved = false;
+    el.resultPanel.setAttribute('data-state', 'empty');
+    el.resultPanel.setAttribute('data-grade', 'none');
+    el.gradeBadge.textContent = '待填写';
+    el.gradeBadge.setAttribute('data-grade', 'none');
+    el.totalScore.textContent = '--';
+    el.baseScore.textContent = '--';
+    el.bonusScore.textContent = '--';
+    el.gaugeProgress.style.strokeDashoffset = '100';
+    if (count === 0) {
+      el.levelHint.textContent = '填完 7 项后自动计算';
+    } else {
+      el.levelHint.innerHTML = '还差 <strong>' + (7 - count) + '</strong> 项，填完自动出分';
+    }
+    el.checklist.hidden = false;
+    el.breakdown.hidden = true;
+    el.resultActions.hidden = true;
+    el.breakdownList.innerHTML = '';
+    el.insight.hidden = true;
+    resetSaveButton();
+  }
+
+  function renderResult(result) {
+    el.resultPanel.setAttribute('data-state', 'ready');
+    el.resultPanel.setAttribute('data-grade', result.grade);
+    el.gradeBadge.textContent = result.grade;
+    el.gradeBadge.setAttribute('data-grade', result.grade);
+    el.totalScore.textContent = result.total.toFixed(1);
+    el.baseScore.textContent = result.base.toFixed(1);
+    el.bonusScore.textContent = result.bonus.toFixed(1);
+    var offset = 100 - (Math.min(result.total, 120) / 120) * 100;
+    el.gaugeProgress.style.strokeDashoffset = offset.toFixed(2);
+
+    if (result.nextLevel) {
+      el.levelHint.innerHTML = '距离<strong>' + result.nextLevel.label + '</strong>还差 <strong>' +
+        result.nextLevel.need.toFixed(1) + '</strong> 分';
+    } else if (result.total >= 120) {
+      el.levelHint.innerHTML = '<strong>满分！</strong>体测达人就是你';
+    } else {
+      el.levelHint.innerHTML = '已达到<strong>优秀</strong>等级' + (result.bonus > 0 ? '，附加分已计入' : '');
+    }
+
+    el.checklist.hidden = true;
+    el.breakdown.hidden = false;
+    el.resultActions.hidden = false;
+    renderBreakdown(result);
+    if (!state.saved) resetSaveButton();
+  }
+
+  function refresh() {
+    state.saved = false;
+    var input = readInput();
+    var checked = TZ.validate(input);
+    var count = countDone(checked);
+    renderBmi(checked);
+    renderChecklist(checked, count);
+    renderErrors(checked);
+
+    if (checked.valid) {
+      state.result = TZ.calculate(input);
+      renderResult(state.result);
+    } else {
+      state.result = null;
+      renderEmpty(checked, count);
+    }
+    scheduleDraft();
+  }
+
+  function scheduleDraft() {
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(saveDraft, 280);
+  }
+
+  function saveDraft() {
+    var values = {};
+    FIELDS.forEach(function (key) {
+      values[key] = $(key).value;
+    });
+    writeStorage(DRAFT_KEY, {
+      gender: state.gender,
+      yearGroup: state.yearGroup,
+      values: values
+    });
+  }
+
+  function restoreDraft() {
+    var draft = readStorage(DRAFT_KEY, null);
+    if (!draft || !draft.values) return false;
+    var hasValue = FIELDS.some(function (key) {
+      return draft.values[key] != null && String(draft.values[key]).trim() !== '';
+    });
+    if (!hasValue) return false;
+    state.gender = draft.gender === 'female' ? 'female' : 'male';
+    state.yearGroup = draft.yearGroup === 'year34' ? 'year34' : 'year12';
+    setInputValues(draft.values);
+    return true;
+  }
+
+  function readStorage(key, fallback) {
+    try {
+      var raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (error) {
+      return fallback;
+    }
+  }
+
+  function writeStorage(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function removeStorage(key) {
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      /* ignore */
+    }
+  }
+
+  function showToast(message) {
+    clearTimeout(toastTimer);
+    el.toast.textContent = message;
+    el.toast.classList.add('is-show');
+    toastTimer = setTimeout(function () {
+      el.toast.classList.remove('is-show');
+    }, 2200);
+  }
+
+  function demoValues(gender) {
+    if (gender === 'female') {
+      return {
+        height: '165',
+        weight: '55',
+        vital: '3200',
+        sprint: '8.0',
+        sitReach: '21.0',
+        jump: '190',
+        strength: '46',
+        runMin: '3',
+        runSec: '40'
+      };
+    }
+    return {
+      height: '178',
+      weight: '70',
+      vital: '4600',
+      sprint: '7.0',
+      sitReach: '19.0',
+      jump: '255',
+      strength: '14',
+      runMin: '3',
+      runSec: '40'
+    };
+  }
+
+  function fillDemo(gender) {
+    setInputValues(demoValues(gender || state.gender));
+    state.touched = {};
+    state.saved = false;
+    refresh();
+  }
+
+  function showView(view, options) {
+    var opts = options || {};
+    if (['calc', 'standard', 'history'].indexOf(view) === -1) view = 'calc';
+    state.view = view;
+    ['calc', 'standard', 'history'].forEach(function (name) {
+      var section = $('view-' + name);
+      if (section) section.hidden = name !== view;
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.nav-item'), function (btn) {
+      btn.classList.toggle('is-active', btn.getAttribute('data-view') === view);
+    });
+    if (view === 'standard') {
+      state.stdGender = state.gender;
+      state.stdYear = state.yearGroup;
+      updateStandardControls();
+      renderStandard();
+    }
+    if (view === 'history') {
+      renderHistory();
+    }
+    if (opts.scroll !== false) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  function formatRecordDate(ts) {
+    var date = new Date(ts);
+    var now = new Date();
+    var opts = { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+    if (date.getFullYear() !== now.getFullYear()) opts.year = 'numeric';
+    return new Intl.DateTimeFormat('zh-CN', opts).format(date);
+  }
+
+  function shortItemName(key, gender) {
+    return {
+      bmi: 'BMI',
+      vital: '肺活量',
+      sprint: '50米',
+      sitReach: '体前屈',
+      jump: '跳远',
+      strength: gender === 'female' ? '仰卧起坐' : '引体',
+      run: gender === 'female' ? '800米' : '1000米'
+    }[key] || key;
+  }
+
+  function loadRecords() {
+    var records = readStorage(RECORDS_KEY, []);
+    if (!Array.isArray(records)) return [];
+    return records.filter(function (record) {
+      return record && typeof record.ts === 'number' && record.input;
+    });
+  }
+
+  function saveRecords(records) {
+    return writeStorage(RECORDS_KEY, records.slice(0, MAX_RECORDS));
+  }
+
+  function renderHistory() {
+    var records = loadRecords();
+    el.historyCount.hidden = records.length === 0;
+    el.historyCount.textContent = String(records.length);
+    el.historySummary.textContent = records.length ? '共 ' + records.length + ' 条记录' : '还没有记录';
+    el.clearHistoryBtn.hidden = records.length === 0;
+    el.historyEmpty.hidden = records.length > 0;
+
+    if (!records.length) {
+      el.historyList.innerHTML = '';
+      return;
+    }
+
+    el.historyList.innerHTML = records.map(function (record) {
+      var genderLabel = record.gender === 'female' ? '女生' : '男生';
+      var yearLabel = record.yearGroup === 'year34' ? '大三 / 大四' : '大一 / 大二';
+      var chips = Array.isArray(record.items) ? record.items.map(function (item) {
+        return '<span class="history-chip">' + escapeHtml(shortItemName(item.key, record.gender)) + ' ' + item.score + '</span>';
+      }).join('') : '';
+      return '<article class="history-card" data-grade="' + escapeHtml(record.grade) + '" data-id="' + escapeHtml(record.id) + '">' +
+        '<div class="history-top">' +
+          '<span class="history-date">' + escapeHtml(formatRecordDate(record.ts)) + '</span>' +
+          '<span class="grade-badge" data-grade="' + escapeHtml(record.grade) + '">' + escapeHtml(record.grade) + '</span>' +
+        '</div>' +
+        '<div class="history-score"><strong>' + Number(record.total).toFixed(1) + '</strong><span>分</span>' +
+          '<small>' + genderLabel + ' · ' + yearLabel + '</small></div>' +
+        '<div class="history-items">' + chips + '</div>' +
+        '<div class="history-actions">' +
+          '<button type="button" data-action="load" data-id="' + escapeHtml(record.id) + '">载入这次成绩</button>' +
+          '<button type="button" data-action="delete" data-id="' + escapeHtml(record.id) + '">删除</button>' +
+        '</div>' +
+      '</article>';
+    }).join('');
+  }
+
+  function findRecord(id) {
+    return loadRecords().filter(function (record) {
+      return record.id === id;
+    })[0];
+  }
+
+  function loadRecord(record) {
+    if (!record) return;
+    state.gender = record.gender === 'female' ? 'female' : 'male';
+    state.yearGroup = record.yearGroup === 'year34' ? 'year34' : 'year12';
+    updateControls();
+    updateDynamicLabels();
+    setInputValues(record.input);
+    state.touched = {};
+    VALIDATION_KEYS.forEach(function (key) {
+      state.touched[key] = true;
+    });
+    state.saved = false;
+    refresh();
+    showView('calc');
+    showToast('已载入这次成绩');
+  }
+
+  function saveCurrent() {
+    if (!state.result) return;
+    var input = readInput();
+    var record = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      ts: Date.now(),
+      gender: state.gender,
+      yearGroup: state.yearGroup,
+      total: state.result.total,
+      base: state.result.base,
+      bonus: state.result.bonus,
+      grade: state.result.grade,
+      input: input,
+      items: state.result.items.map(function (item) {
+        return { key: item.key, name: item.name, score: item.score };
+      })
+    };
+    var records = loadRecords();
+    records.unshift(record);
+    if (!saveRecords(records)) {
+      showToast('浏览器不允许本地存储，本次成绩未保存');
+      return;
+    }
+    state.saved = true;
+    el.saveBtn.textContent = '已保存 ✓';
+    el.saveBtn.disabled = true;
+    setTimeout(function () {
+      if (state.saved) {
+        el.saveBtn.textContent = '已保存 ✓';
+      } else {
+        resetSaveButton();
+      }
+    }, 1600);
+    renderHistory();
+    showToast('已保存到我的记录');
+  }
+
+  async function copyCurrent() {
+    if (!state.result) return;
+    var text = TZ.summaryText(state.result);
+    var copied = false;
+    try {
+      await navigator.clipboard.writeText(text);
+      copied = true;
+    } catch (error) {
+      var area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', 'readonly');
+      area.style.position = 'fixed';
+      area.style.left = '-9999px';
+      area.style.top = '0';
+      document.body.appendChild(area);
+      area.select();
+      try {
+        copied = document.execCommand('copy');
+      } catch (copyError) {
+        copied = false;
+      }
+      document.body.removeChild(area);
+    }
+    showToast(copied ? '成绩单已复制' : '复制失败，请手动选择文本');
+  }
+
+  function renderBonusTable(container, values, rowLabel) {
+    var headers = '';
+    for (var i = 10; i >= 1; i--) headers += '<th>' + i + '</th>';
+    var cells = values.map(function (value) {
+      return '<td>' + value + '</td>';
+    }).join('');
+    container.innerHTML = '<table class="bonus-table"><thead><tr><th>附加分</th>' + headers +
+      '</tr></thead><tbody><tr><th>' + rowLabel + '</th>' + cells + '</tr></tbody></table>';
+  }
+
+  function renderStandard() {
+    var gender = state.stdGender;
+    var yearGroup = state.stdYear;
+    var table = TZ.TABLES[gender][yearGroup];
+    var female = gender === 'female';
+    var strengthName = female ? '1 分钟仰卧起坐' : '引体向上';
+    var runName = female ? '800 米跑' : '1000 米跑';
+
+    el.scoreTableHead.innerHTML = '<tr>' +
+      '<th>得分</th>' +
+      '<th>肺活量<small>ml</small></th>' +
+      '<th>50 米跑<small>秒</small></th>' +
+      '<th>坐位体前屈<small>cm</small></th>' +
+      '<th>立定跳远<small>cm</small></th>' +
+      '<th>' + strengthName + '<small>次</small></th>' +
+      '<th>' + runName + '<small>分′秒″</small></th>' +
+    '</tr>';
+
+    var rows = [];
+    for (var i = 0; i < TZ.SCORES.length; i++) {
+      var score = TZ.SCORES[i];
+      var band = score >= 90 ? 'band-excellent' : score >= 80 ? 'band-good' : score >= 60 ? 'band-pass' : 'band-fail';
+      var strength = table.strength[i];
+      rows.push('<tr class="' + band + '">' +
+        '<td>' + score + '</td>' +
+        '<td>' + table.vital[i] + '</td>' +
+        '<td>' + table.sprint[i].toFixed(1) + '</td>' +
+        '<td>' + table.sitReach[i].toFixed(1) + '</td>' +
+        '<td>' + table.jump[i] + '</td>' +
+        '<td' + (strength == null ? ' class="is-empty"' : '') + '>' + (strength == null ? '—' : strength) + '</td>' +
+        '<td>' + TZ.formatTime(table.run[i]) + '</td>' +
+      '</tr>');
+    }
+    el.scoreTableBody.innerHTML = rows.join('');
+
+    var yearLabel = TZ.YEAR_LABELS[yearGroup];
+    el.stdStrengthNote.textContent = strengthName + ' 100 分标准为 ' + table.strength[0] +
+      ' 次（' + yearLabel + '）。超过 100 分标准后，按超出的次数加分。';
+    el.stdRunNote.textContent = runName + ' 100 分标准为 ' + TZ.formatTime(table.run[0]) +
+      '（' + yearLabel + '）。比该成绩每快一档，按下表加分。';
+
+    renderBonusTable(el.strengthBonusTable, TZ.BONUS_STRENGTH[gender].slice().reverse(), '需超出');
+    renderBonusTable(el.runBonusTable, TZ.BONUS_RUN[gender].slice().reverse(), '需快');
+
+    var names = {
+      bmi: '体重指数（BMI）',
+      vital: '肺活量',
+      sprint: '50 米跑',
+      sitReach: '坐位体前屈',
+      jump: '立定跳远',
+      strength: female ? '仰卧起坐' : '引体向上',
+      run: female ? '800 米跑' : '1000 米跑'
+    };
+    var weights = ['bmi', 'vital', 'sprint', 'sitReach', 'jump', 'strength', 'run'];
+    el.weightList.innerHTML = weights.map(function (key) {
+      var weight = TZ.WEIGHTS[key];
+      return '<div class="weight-row"><span>' + names[key] + '</span>' +
+        '<div class="weight-bar"><span style="width:' + weight + '%"></span></div>' +
+        '<b>' + weight + '%</b></div>';
+    }).join('');
+  }
+
+  function bindEvents() {
+    el.form.addEventListener('input', function () {
+      refresh();
+    });
+
+    el.form.addEventListener('submit', function (event) {
+      event.preventDefault();
+    });
+
+    el.form.addEventListener('focusout', function (event) {
+      var input = event.target;
+      if (!input || !input.id) return;
+      if (input.id === 'runMin' || input.id === 'runSec') {
+        state.touched.run = true;
+      } else {
+        state.touched[input.id] = true;
+      }
+      refresh();
+    });
+
+    el.genderControl.addEventListener('click', function (event) {
+      var btn = event.target.closest('[data-gender]');
+      if (!btn || btn.getAttribute('data-gender') === state.gender) return;
+      state.gender = btn.getAttribute('data-gender');
+      updateControls();
+      updateDynamicLabels();
+      clearSensitiveValues();
+      refresh();
+    });
+
+    el.yearControl.addEventListener('click', function (event) {
+      var btn = event.target.closest('[data-year]');
+      if (!btn || btn.getAttribute('data-year') === state.yearGroup) return;
+      state.yearGroup = btn.getAttribute('data-year');
+      updateControls();
+      updateDynamicLabels();
+      refresh();
+    });
+
+    el.stdGender.addEventListener('click', function (event) {
+      var btn = event.target.closest('[data-gender]');
+      if (!btn) return;
+      state.stdGender = btn.getAttribute('data-gender');
+      updateStandardControls();
+      renderStandard();
+    });
+
+    el.stdYear.addEventListener('click', function (event) {
+      var btn = event.target.closest('[data-year]');
+      if (!btn) return;
+      state.stdYear = btn.getAttribute('data-year');
+      updateStandardControls();
+      renderStandard();
+    });
+
+    $('demoBtn').addEventListener('click', function () {
+      fillDemo();
+      showToast('已填入一组示例数据');
+    });
+
+    $('resetBtn').addEventListener('click', function () {
+      FIELDS.forEach(function (key) {
+        $(key).value = '';
+      });
+      state.touched = {};
+      state.saved = false;
+      removeStorage(DRAFT_KEY);
+      refresh();
+      $('height').focus();
+      showToast('已清空，重新填写吧');
+    });
+
+    el.saveBtn.addEventListener('click', saveCurrent);
+    el.copyBtn.addEventListener('click', copyCurrent);
+
+    el.historyList.addEventListener('click', function (event) {
+      var btn = event.target.closest('[data-action]');
+      if (!btn) return;
+      var id = btn.getAttribute('data-id');
+      if (btn.getAttribute('data-action') === 'load') {
+        loadRecord(findRecord(id));
+      } else if (btn.getAttribute('data-action') === 'delete') {
+        var records = loadRecords().filter(function (record) {
+          return record.id !== id;
+        });
+        saveRecords(records);
+        renderHistory();
+        showToast('记录已删除');
+      }
+    });
+
+    el.clearHistoryBtn.addEventListener('click', function () {
+      if (!loadRecords().length) return;
+      if (window.confirm('确定清空全部体测记录吗？此操作无法撤销。')) {
+        saveRecords([]);
+        renderHistory();
+        showToast('全部记录已清空');
+      }
+    });
+
+    document.addEventListener('click', function (event) {
+      var trigger = event.target.closest('[data-view]');
+      if (!trigger) return;
+      event.preventDefault();
+      showView(trigger.getAttribute('data-view'));
+    });
+
+    window.addEventListener('hashchange', function () {
+      var view = window.location.hash.replace('#', '');
+      if (view) showView(view);
+    });
+  }
+
+  function init() {
+    var fallback = $('jsFallback');
+    if (fallback) fallback.hidden = true;
+    cacheDom();
+    populateChecklist();
+    bindEvents();
+
+    var params = new URLSearchParams(window.location.search);
+    var hasDemo = params.has('demo');
+    if (!hasDemo) restoreDraft();
+
+    updateControls();
+    updateDynamicLabels();
+    renderStandard();
+    renderHistory();
+    refresh();
+
+    if (hasDemo) {
+      var demo = params.get('demo');
+      if (demo === 'female') state.gender = 'female';
+      updateControls();
+      updateDynamicLabels();
+      fillDemo(state.gender);
+    }
+
+    var initialView = params.get('view') || window.location.hash.replace('#', '') || 'calc';
+    showView(initialView, { scroll: false });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
+</script>
+</body>
+</html>
